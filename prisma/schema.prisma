@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & AUTH
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  password      String?   // For credentials provider
+  role          UserRole  @default(USER)
+  
+  // Relations
+  profile       Profile?
+  accounts      Account[]
+  sessions      Session[]
+  assessments   Assessment[]
+  recommendations Recommendation[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  phone       String?
+  location    String?
+  education   String?
+  grade       String?
+  
+  // Preferences
+  interests   String[]
+  strengths   String[]
+  
+  // Assessment tracking
+  assessmentCompleted Boolean @default(false)
+  currentAssessmentId String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// ASSESSMENT
+// ============================================
+
+model Assessment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  responses   Json
+  status      AssessmentStatus @default(IN_PROGRESS)
+  completedAt DateTime?
+  
+  recommendations Recommendation[]
+  
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ============================================
+// NEW ASSESSMENT SYSTEM
+// ============================================
+
+model AssessmentSession {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  // Progress tracking
+  currentStep     Int      @default(0)
+  totalSteps      Int      @default(8)
+  progress        Float    @default(0)
+  
+  // Status
+  status          AssessmentSessionStatus @default(IN_PROGRESS)
+  startedAt       DateTime @default(now())
+  lastSavedAt     DateTime @default(now())
+  completedAt     DateTime?
+  
+  // Relations
+  answers         AssessmentAnswer[]
+  preferences     StudentPreference?
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model AssessmentAnswer {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Question info
+  questionId      String
+  category        AssessmentCategory
+  questionType    QuestionType
+  
+  // Answer data
+  answer          Json
+  score           Float?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([category])
+  @@unique([sessionId, questionId])
+}
+
+model StudentPreference {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  session         AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Career aspirations
+  targetExams     String[] // JEE, NEET, UPSC, etc.
+  targetStreams   String[] // Engineering, Medical, Commerce, etc.
+  dreamCareers    String[]
+  
+  // Academic preferences
+  preferredSubjects String[]
+  weakSubjects    String[]
+  
+  // Practical constraints
+  preferredLocations String[]
+  budgetRange     String?
+  
+  // Results
+  recommendedPaths String[]
+  topSkills       String[]
+  personalityType String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ============================================
+// RECOMMENDATIONS
+// ============================================
+
+model Recommendation {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId  String
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  
+  type          RecommendationType
+  title         String
+  description   String   @db.Text
+  data          Json
+  confidence    Float?
+  
+  isViewed      Boolean  @default(false)
+  isSaved       Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+
+// ============================================
+// CONTENT
+// ============================================
+
+model CareerPath {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String   @db.Text
+  category      CareerCategory
+  industry      String?
+  education     String[]
+  skills        String[]
+  roadmap       Json
+  salaryRange   Json?
+  relatedCareers String[]
+  isActive      Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model College {
+  id            String   @id @default(cuid())
+  name          String
+  location      String
+  state         String
+  type          CollegeType
+  category      CollegeCategory
+  ranking       Int?
+  fees          Json?
+  courses       String[]
+  entranceExams String[]
+  website       String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([category])
+  @@index([state])
+  @@index([isActive])
+}
+
+model Exam {
+  id               String   @id @default(cuid())
+  name             String
+  fullName         String
+  category         ExamCategory
+  level            ExamLevel
+  applicationStart DateTime?
+  applicationEnd   DateTime?
+  examDate         DateTime?
+  eligibility      String[]
+  syllabus         String?  @db.Text
+  forCourses       String[]
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AssessmentStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum AssessmentSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum AssessmentCategory {
+  PERSONALITY
+  INTERESTS
+  SKILLS
+  ACADEMIC
+  CAREER_PREFERENCES
+  LEARNING_STYLE
+  GOALS
+  STREAM_ASPIRATIONS
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SCALE
+  RANKING
+  SCENARIO
+  YES_NO
+}
+
+enum RecommendationType {
+  CAREER
+  COLLEGE
+  EXAM
+  SKILL
+  ROADMAP
+}
+
+enum CareerCategory {
+  TECHNOLOGY
+  MEDICAL
+  ENGINEERING
+  BUSINESS
+  ARTS
+  SCIENCE
+  LAW
+  GOVERNMENT
+  OTHER
+}
+
+enum CollegeType {
+  GOVERNMENT
+  PRIVATE
+  DEEMED
+  AUTONOMOUS
+}
+
+enum CollegeCategory {
+  ENGINEERING
+  MEDICAL
+  MANAGEMENT
+  ARTS
+  SCIENCE
+  LAW
+  OTHER
+}
+
+enum ExamCategory {
+  JEE
+  NEET
+  UPSC
+  SSC
+  BANKING
+  STATE_PSC
+  OTHER
+}
+
+enum ExamLevel {
+  NATIONAL
+  STATE
+  UNIVERSITY
+  INSTITUTE
+}
