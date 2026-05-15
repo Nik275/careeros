@@ -4,6 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
+    const token_hash = searchParams.get('token_hash')
+    const type = searchParams.get('type')
     
     // Determine the origin - handle both production and localhost
     const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -11,9 +13,9 @@ export async function GET(request: NextRequest) {
     // Get the 'next' parameter or default to dashboard
     const next = searchParams.get('next') ?? '/dashboard'
 
-    if (!code) {
-        console.error('Auth callback: No code provided')
-        return NextResponse.redirect(`${origin}/login?error=no_code`)
+    if (!code && !(token_hash && type)) {
+      console.error('Auth callback: No auth data provided')
+      return NextResponse.redirect(`${origin}/login?error=no_auth_data`)
     }
 
     // Create a response object to attach cookies
@@ -62,7 +64,22 @@ export async function GET(request: NextRequest) {
 
     try {
         // Exchange the code for a session
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+        let exchangeError = null
+
+        if (code) {
+          const { error } =
+            await supabase.auth.exchangeCodeForSession(code)
+
+          exchangeError = error
+        } else if (token_hash && type) {
+          const { error } =
+            await supabase.auth.verifyOtp({
+              token_hash,
+              type: type as any,
+            })
+
+          exchangeError = error
+        }
 
         if (exchangeError) {
             console.error('Auth callback: Code exchange failed', exchangeError)
