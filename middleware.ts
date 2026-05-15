@@ -112,9 +112,5 @@ export const config = {
     '/profile/:path*',
     '/recommendations/:path*',
     '/settings/:path*',
-    '/login',
-    '/signup',
-    '/forgot-password',
-    '/reset-password',
   ],
 }
