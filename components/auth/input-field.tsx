@@ -8,10 +8,11 @@ interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label: string
     error?: string
     icon?: LucideIcon
+    testId?: string
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-    ({ label, error, icon: Icon, type = 'text', className = '', ...props }, ref) => {
+    ({ label, error, icon: Icon, type = 'text', className = '', testId, ...props }, ref) => {
         const [showPassword, setShowPassword] = useState(false)
         const isPassword = type === 'password'
         const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
@@ -28,6 +29,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                     <input
                         ref={ref}
                         type={inputType}
+                        data-testid={testId}
                         className={`
                             w-full h-12 px-4 rounded-xl bg-white/[0.03] border border-white/[0.08]
                             text-white placeholder:text-white/20
@@ -55,6 +57,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
+                            data-testid={`${testId}-error`}
                             className="mt-2 text-xs text-red-400/80"
                         >
                             {error}

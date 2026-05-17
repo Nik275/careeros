@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Mail, Lock, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { sanitizeInput } from '@/lib/sanitize'
 import { AuthCard } from '@/components/auth/auth-card'
 import { GoogleButton } from '@/components/auth/google-button'
 import { Divider } from '@/components/auth/divider'
@@ -277,9 +278,11 @@ export default function LoginPage() {
                             type="email"
                             placeholder="you@example.com"
                             icon={Mail}
+                            testId="login-email"
                             value={formData.email}
                             onChange={(e) => {
-                                setFormData({ ...formData, email: e.target.value })
+                                const sanitized = sanitizeInput(e.target.value, 'email')
+                                setFormData({ ...formData, email: sanitized })
                                 setUnverifiedEmail(null)
                                 setShowVerificationBanner(false)
                             }}
@@ -292,8 +295,12 @@ export default function LoginPage() {
                                 type="password"
                                 placeholder="Enter your password"
                                 icon={Lock}
+                                testId="login-password"
                                 value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                onChange={(e) => {
+                                const sanitized = sanitizeInput(e.target.value, 'password')
+                                setFormData({ ...formData, password: sanitized })
+                            }}
                                 error={errors.password}
                             />
                             <div className="mt-2 text-right">

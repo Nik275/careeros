@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Mail, Lock, User, GraduationCap, Briefcase, ArrowLeft, Check, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useCareerInterests } from '@/hooks/use-career-interests'
+import { sanitizeInput } from '@/lib/sanitize'
 import { AuthCard } from '@/components/auth/auth-card'
 import { GoogleButton } from '@/components/auth/google-button'
 import { Divider } from '@/components/auth/divider'
@@ -303,8 +304,12 @@ export default function SignupPage() {
                                     type="text"
                                     placeholder="Your full name"
                                     icon={User}
+                                    testId="signup-fullname"
                                     value={formData.fullName}
-                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                    onChange={(e) => {
+                                    const sanitized = sanitizeInput(e.target.value, 'text')
+                                    setFormData({ ...formData, fullName: sanitized })
+                                }}
                                     error={errors.fullName}
                                 />
 
@@ -313,8 +318,12 @@ export default function SignupPage() {
                                     type="email"
                                     placeholder="you@example.com"
                                     icon={Mail}
+                                    testId="signup-email"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={(e) => {
+                                    const sanitized = sanitizeInput(e.target.value, 'email')
+                                    setFormData({ ...formData, email: sanitized })
+                                }}
                                     error={errors.email}
                                 />
 
@@ -323,8 +332,12 @@ export default function SignupPage() {
                                     type="password"
                                     placeholder="Create a strong password"
                                     icon={Lock}
+                                    testId="signup-password"
                                     value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    onChange={(e) => {
+                                    const sanitized = sanitizeInput(e.target.value, 'password')
+                                    setFormData({ ...formData, password: sanitized })
+                                }}
                                     error={errors.password}
                                 />
 
@@ -333,8 +346,12 @@ export default function SignupPage() {
                                     type="password"
                                     placeholder="Confirm your password"
                                     icon={Lock}
+                                    testId="signup-confirm-password"
                                     value={formData.confirmPassword}
-                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    onChange={(e) => {
+                                    const sanitized = sanitizeInput(e.target.value, 'password')
+                                    setFormData({ ...formData, confirmPassword: sanitized })
+                                }}
                                     error={errors.confirmPassword}
                                 />
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { UserProfile, SignUpData, SignInData, AuthError } from '@/types/auth'
+import { sanitizeInput, validateEmail } from '@/lib/sanitize'
 
 interface AuthState {
   user: User | null
@@ -198,14 +199,23 @@ export function useAuth() {
   // Sign up
   const signUp = useCallback(async (data: SignUpData): Promise<{ error?: AuthError; existingUnconfirmed?: boolean }> => {
     try {
-      console.log('[Auth] Signing up:', data.email)
+      // Sanitize and validate inputs
+      const email = sanitizeInput(data.email, 'email')
+      const fullName = sanitizeInput(data.fullName, 'text')
+      
+      // Validate email format
+      if (!validateEmail(email)) {
+        return { error: { message: 'Invalid email format' } }
+      }
+      
+      console.log('[Auth] Signing up:', email)
       
       const { data: signUpData, error } = await supabase.auth.signUp({
-        email: data.email,
+        email: email,
         password: data.password,
         options: {
           data: {
-            full_name: data.fullName,
+            full_name: fullName,
             class_level: data.classLevel,
             career_interest: data.careerInterest,
           },
@@ -247,10 +257,18 @@ export function useAuth() {
   // Sign in
   const signIn = useCallback(async (data: SignInData): Promise<{ error?: AuthError }> => {
     try {
-      console.log('[Auth] Signing in:', data.email)
+      // Sanitize email input
+      const email = sanitizeInput(data.email, 'email')
+      
+      // Validate email format
+      if (!validateEmail(email)) {
+        return { error: { message: 'Invalid email format' } }
+      }
+      
+      console.log('[Auth] Signing in:', email)
       
       const { data: signInData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
+        email: email,
         password: data.password,
       })
 
@@ -309,9 +327,17 @@ export function useAuth() {
   // Resend verification
   const resendVerificationEmail = useCallback(async (email: string): Promise<{ error?: AuthError }> => {
     try {
+      // Sanitize email input
+      const sanitizedEmail = sanitizeInput(email, 'email')
+      
+      // Validate email format
+      if (!validateEmail(sanitizedEmail)) {
+        return { error: { message: 'Invalid email format' } }
+      }
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email,
+        email: sanitizedEmail,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -330,7 +356,15 @@ export function useAuth() {
   // Reset password
   const resetPassword = useCallback(async (email: string): Promise<{ error?: AuthError }> => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Sanitize email input
+      const sanitizedEmail = sanitizeInput(email, 'email')
+      
+      // Validate email format
+      if (!validateEmail(sanitizedEmail)) {
+        return { error: { message: 'Invalid email format' } }
+      }
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
 

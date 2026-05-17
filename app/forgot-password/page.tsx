@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { sanitizeInput } from '@/lib/sanitize'
 import { AuthCard } from '@/components/auth/auth-card'
 import { InputField } from '@/components/auth/input-field'
 import { SubmitButton } from '@/components/auth/submit-button'
@@ -82,8 +83,9 @@ export default function ForgotPasswordPage() {
                                 type="email"
                                 placeholder="you@example.com"
                                 icon={Mail}
+                                testId="forgot-password-email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => setEmail(sanitizeInput(e.target.value, 'email'))}
                                 error={error}
                             />
 

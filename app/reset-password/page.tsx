@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Lock, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { sanitizeInput } from '@/lib/sanitize'
 import { createClient } from '@/lib/supabase/client'
 import { AuthCard } from '@/components/auth/auth-card'
 import { InputField } from '@/components/auth/input-field'
@@ -138,7 +139,7 @@ export default function ResetPasswordPage() {
                                 placeholder="Create a strong password"
                                 icon={Lock}
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => setPassword(sanitizeInput(e.target.value, 'password'))}
                                 error={errors.password}
                             />
 
@@ -148,7 +149,7 @@ export default function ResetPasswordPage() {
                                 placeholder="Confirm your password"
                                 icon={Lock}
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e) => setConfirmPassword(sanitizeInput(e.target.value, 'password'))}
                                 error={errors.confirmPassword}
                             />
 
