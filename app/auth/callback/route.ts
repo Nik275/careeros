@@ -8,14 +8,19 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     
     // Determine the origin - handle both production and localhost
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const origin = new URL(request.url).origin
     
     // Get the 'next' parameter or default to dashboard
     const next = searchParams.get('next') ?? '/dashboard'
 
     if (!code && !(token_hash && type)) {
-      console.error('Auth callback: No auth data provided')
-      return NextResponse.redirect(`${origin}/login?error=no_auth_data`)
+      console.log(
+        'Auth callback: Missing auth data'
+     )
+
+     return NextResponse.redirect(
+       `${origin}/login`
+     )
     }
 
     // Create a response object to attach cookies
